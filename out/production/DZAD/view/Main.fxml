@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.MenuButton?>
+<?import javafx.scene.control.MenuItem?>
+<?import javafx.scene.control.Slider?>
+<?import javafx.scene.effect.Lighting?>
+<?import javafx.scene.effect.Shadow?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.paint.Color?>
+<?import javafx.scene.paint.LinearGradient?>
+<?import javafx.scene.paint.RadialGradient?>
+<?import javafx.scene.paint.Stop?>
+<?import javafx.scene.shape.Circle?>
+<?import javafx.scene.text.Font?>
+
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="552.0" prefWidth="937.0" style=" -fx-background-image: url('file:///C:/Dev/DZAD/src/files/img1.png');   -fx-background-size: 100% 100%;" xmlns="http://javafx.com/javafx/16" xmlns:fx="http://javafx.com/fxml/1" fx:controller="view.MainController">
+   <ListView fx:id="attributesListView" layoutX="56.0" layoutY="98.0" prefHeight="220.0" prefWidth="378.0" />
+   <MenuButton layoutX="203.0" layoutY="37.0" mnemonicParsing="false" prefHeight="35.0" prefWidth="85.0" text="Load " textAlignment="CENTER">
+      <items>
+         <MenuItem mnemonicParsing="false" onAction="#pressButtonLoad" style="-fx-font-size: 20.0 pt;" text="Recording file" />
+         <MenuItem mnemonicParsing="false" onAction="#pressButtonAnomalyDetection" style="-fx-font-size: 20.0 pt;" text="Anomaly detection " />
+      </items>
+      <font>
+         <Font name="System Bold Italic" size="15.0" />
+      </font>
+   </MenuButton>
+   <Circle layoutX="727.0" layoutY="188.0" radius="116.0" stroke="#0a0000" strokeType="INSIDE">
+      <fill>
+         <LinearGradient cycleMethod="REFLECT" endX="1.0" endY="1.0">
+            <stops>
+               <Stop>
+                  <color>
+                     <Color opacity="0.8392156958580017" />
+                  </color>
+               </Stop>
+               <Stop offset="0.3100686498855835">
+                  <color>
+                     <Color red="0.09803921729326248" green="0.13725490868091583" blue="0.16862745583057404" />
+                  </color>
+               </Stop>
+               <Stop offset="1.0">
+                  <color>
+                     <Color red="0.8157894611358643" green="0.6647173762321472" blue="0.8157894611358643" />
+                  </color>
+               </Stop>
+            </stops>
+         </LinearGradient>
+      </fill></Circle>
+   <Circle fx:id="joystickControl" fill="#cfa9cf" layoutX="728.0" layoutY="189.0" radius="42.0" strokeType="INSIDE">
+      <effect>
+         <Lighting>
+            <bumpInput>
+               <Shadow />
+            </bumpInput>
+         </Lighting>
+      </effect>
+      <stroke>
+         <RadialGradient centerX="0.4702602088672964" radius="0.5">
+            <stops>
+               <Stop color="BLACK" />
+               <Stop color="WHITE" offset="1.0" />
+            </stops>
+         </RadialGradient>
+      </stroke>
+   </Circle>
+   <Label layoutX="649.0" layoutY="35.0" text="🡄 aileron 🡆" textFill="#d7b9d7">
+      <font>
+         <Font name="System Bold" size="24.0" />
+      </font>
+   </Label>
+   <Label layoutX="785.0" layoutY="190.0" prefHeight="35.0" prefWidth="175.0" rotate="90.0" text="🡄 elevator 🡆" textFill="#d0a8c9">
+      <font>
+         <Font name="System Bold" size="24.0" />
+      </font>
+   </Label>
+   <Slider fx:id="rudder" blockIncrement="0.1" disable="true" layoutX="636.0" layoutY="332.0" max="1.0" min="-1.0" prefHeight="14.0" prefWidth="183.0" />
+   <Slider fx:id="throttle" blockIncrement="0.05" disable="true" layoutX="566.0" layoutY="101.0" max="1.0" orientation="VERTICAL" prefHeight="175.0" prefWidth="14.0" value="0.5" />
+   <Button layoutX="351.0" layoutY="427.0" mnemonicParsing="false" onAction="#pressButtonPlay" prefHeight="74.0" prefWidth="70.0" style="-fx-background-color: none;" text="▶" textFill="#d7b9d7">
+      <font>
+         <Font size="55.0" />
+      </font>
+   </Button>
+   <Button layoutX="442.0" layoutY="436.0" mnemonicParsing="false" onAction="#pressButtonPause" prefHeight="102.0" prefWidth="102.0" style="-fx-background-color: none;" text="⏸" textFill="#d7b9d7">
+      <font>
+         <Font size="40.0" />
+      </font>
+   </Button>
+   <Button layoutX="267.0" layoutY="444.0" mnemonicParsing="false" onAction="#pressButtonRewind" prefHeight="83.0" prefWidth="85.0" style="-fx-background-color: none;" text="⏪" textFill="#d7b9d7">
+      <font>
+         <Font size="40.0" />
+      </font>
+   </Button>
+   <Button layoutX="607.0" layoutY="444.0" mnemonicParsing="false" onAction="#pressButtonForward" prefHeight="86.0" prefWidth="85.0" style="-fx-background-color: none;" text="⏩" textFill="#d7b9d7">
+      <font>
+         <Font size="40.0" />
+      </font>
+   </Button>
+   <Button layoutX="527.0" layoutY="444.0" mnemonicParsing="false" onAction="#pressButtonStop" prefHeight="86.0" prefWidth="92.0" style="-fx-background-color: none;" text="⏹" textFill="#d7b9d7">
+      <font>
+         <Font size="40.0" />
+      </font>
+   </Button>
+   <Slider fx:id="progressBar" layoutX="184.0" layoutY="430.0" max="1.0" prefHeight="14.0" prefWidth="552.0" />
+   <Label fx:id="currentTime" layoutX="758.0" layoutY="420.0" prefHeight="35.0" prefWidth="52.0" text="0:0" textFill="#d7b9d7">
+      <font>
+         <Font name="System Bold" size="15.0" />
+      </font>
+   </Label>
+</AnchorPane>

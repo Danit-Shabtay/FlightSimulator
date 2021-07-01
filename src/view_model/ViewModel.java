@@ -1,0 +1,205 @@
+package view_model;
+
+import anomalyDetectors.*;
+import javafx.application.Platform;
+import javafx.beans.property.*;
+import javafx.collections.FXCollections;
+import javafx.scene.layout.AnchorPane;
+import model.Model;
+import additional.PearsonCorrelation;
+import additional.Point;
+import additional.Properties;
+import additional.TimeSeries;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.util.Map;
+import java.util.Observable;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+public class ViewModel extends Observable {
+    private Model model;
+    private Properties properties;
+    private TimeSeries ts,regTs;
+    private int csvLength,localNumOfRow;
+    private String localSelectedFeature;
+    private ExecutorService executor;
+    private Map<String, CorrelatedFeatures> correlatedFeaturesMap;
+    public DoubleProperty playSpeed,progression,throttle,rudder,aileron,elevators,heading,speed,altitude,roll,pitch,yaw;
+    public StringProperty anomalyFlightPath,propertiesPath,currentTime,selectedFeature,theMostCorrelativeAttribute,correlationPercents;
+    public ListProperty<Point> selectedAttributePoints,theMostCorrelativeAttributePoints;
+    public ListProperty<String> features;
+    public IntegerProperty numOfRow;
+
+    public ViewModel(Model model) {
+        this.model=model;
+        executor = Executors.newSingleThreadExecutor();
+        numOfRow= new SimpleIntegerProperty();
+        numOfRow.bind(model.numOfRow);
+        playSpeed = new SimpleDoubleProperty();
+        progression = new SimpleDoubleProperty();
+        throttle = new SimpleDoubleProperty();
+        rudder = new SimpleDoubleProperty();
+        aileron = new SimpleDoubleProperty();
+        elevators = new SimpleDoubleProperty();
+        heading = new SimpleDoubleProperty();
+        speed = new SimpleDoubleProperty();
+        altitude = new SimpleDoubleProperty();
+        roll = new SimpleDoubleProperty();
+        pitch = new SimpleDoubleProperty();
+        yaw = new SimpleDoubleProperty();
+        anomalyFlightPath = new SimpleStringProperty();
+        propertiesPath=new SimpleStringProperty();
+        currentTime = new SimpleStringProperty("0:0");
+        selectedFeature=new SimpleStringProperty();
+        theMostCorrelativeAttribute=new SimpleStringProperty("");
+        selectedAttributePoints=new SimpleListProperty(FXCollections.observableArrayList());
+        theMostCorrelativeAttributePoints=new SimpleListProperty(FXCollections.observableArrayList());
+        features=new SimpleListProperty(FXCollections.observableArrayList());
+        correlationPercents= new SimpleStringProperty();
+        properties=new Properties();
+        properties.deserializeFromXML("settings.xml");
+        model.setProperties(properties);
+        localSelectedFeature="";
+
+        playSpeed.addListener((observable, oldValue, newValue)-> model.setPlaySpeed((double)newValue));
+        anomalyFlightPath.addListener((observable, oldValue, newValue) -> {
+            if(newValue!=null) {
+                try {
+                    ts = new TimeSeries(newValue);
+                }
+                catch (Exception e) {
+                    setChanged();
+                    notifyObservers("CSV file error");
+                    return;
+                }
+                model.setTimeSeries(ts);
+                csvLength = ts.getRowSize();
+
+                PearsonCorrelation pearsonCorrelation=new PearsonCorrelation();
+                correlatedFeaturesMap=pearsonCorrelation.getTheMostCorrelatedFeaturesMap(ts);
+                features.set(ts.getAttributes());
+            }
+        });
+
+        propertiesPath.addListener((observable, oldValue, newValue) -> {
+            if(!properties.deserializeFromXML(newValue)){
+                propertiesPath.setValue(null);
+                setChanged();
+                notifyObservers("properties file error");
+            }
+            else{
+                model.setProperties(properties);
+            }
+        });
+        progression.addListener((observable, oldValue, newValue)->{
+            if(ts!=null)
+                model.setProgression((int)(ts.getRowSize() * newValue.doubleValue()));});
+        selectedFeature.addListener((observable, oldValue, newValue) -> {
+            if(ts!=null){
+                if(correlatedFeaturesMap.containsKey(newValue)){
+                    String temp=correlatedFeaturesMap.get(newValue).feature1;
+                    if(!temp.equals(selectedFeature.getValue())) {
+                        theMostCorrelativeAttribute.setValue(temp);
+                    }
+                    else{
+                        theMostCorrelativeAttribute.setValue(correlatedFeaturesMap.get(newValue).feature2);
+                    }
+                    correlationPercents.set(String.valueOf(Math.abs(correlatedFeaturesMap.get(newValue).correlation*100)).substring(0,5)+"% of coronation");
+                }
+                else{
+                    theMostCorrelativeAttribute.setValue("");
+                    correlationPercents.set("");
+                }
+            }
+        });
+
+        numOfRow.addListener((observable, oldValue, newValue) -> {
+            executor.execute(() -> progression.setValue((double)numOfRow.getValue()/csvLength));
+            executor.execute(() -> setTime(numOfRow.getValue()));
+            executor.execute(() -> throttle.setValue(ts.getDataFromSpecificRowAndColumn(properties.propertyName("throttle"),numOfRow.getValue())));
+            executor.execute(() -> rudder.setValue(ts.getDataFromSpecificRowAndColumn(properties.propertyName("rudder"),numOfRow.getValue())));
+            executor.execute(() -> aileron.setValue(ts.getDataFromSpecificRowAndColumn(properties.propertyName("aileron"),numOfRow.getValue())*40));
+            executor.execute(() -> elevators.setValue(ts.getDataFromSpecificRowAndColumn(properties.propertyName("elevators"),numOfRow.getValue())*40));
+            executor.execute(() -> heading.setValue(ts.getDataFromSpecificRowAndColumn(properties.propertyName("heading"),numOfRow.getValue())));
+            executor.execute(() -> speed.setValue(ts.getDataFromSpecificRowAndColumn(properties.propertyName("speed"),numOfRow.getValue())));
+            executor.execute(() -> altitude.setValue(ts.getDataFromSpecificRowAndColumn(properties.propertyName("altitude"),numOfRow.getValue())));
+            executor.execute(() -> roll.setValue(ts.getDataFromSpecificRowAndColumn(properties.propertyName("roll"),numOfRow.getValue())));
+            executor.execute(() -> pitch.setValue(ts.getDataFromSpecificRowAndColumn(properties.propertyName("pitch"),numOfRow.getValue())));
+            executor.execute(() -> yaw.setValue(ts.getDataFromSpecificRowAndColumn(properties.propertyName("yaw"),numOfRow.getValue())));
+
+            boolean theFeatureNameNotChanged=localSelectedFeature.intern()==selectedFeature.getValue().intern();
+
+            if(theFeatureNameNotChanged && localNumOfRow+1==numOfRow.getValue()) {
+                Point newPoint=new Point(numOfRow.getValue(),ts.getAttributeData(localSelectedFeature).get(numOfRow.getValue()));
+                Platform.runLater(()->selectedAttributePoints.add(newPoint));
+                if(theMostCorrelativeAttribute.getValue().intern()!=("")){
+                    Point newPoint2=new Point(numOfRow.getValue(),ts.getAttributeData(theMostCorrelativeAttribute.getValue()).get(numOfRow.getValue()));
+                    Platform.runLater(()->theMostCorrelativeAttributePoints.add(newPoint2));
+                }
+            }
+            else if(theFeatureNameNotChanged && localNumOfRow-1==numOfRow.getValue()) {
+                Platform.runLater(()->{
+                int length=selectedAttributePoints.size();
+                if(length>0) {
+                    selectedAttributePoints.remove(length - 1);
+                    if(theMostCorrelativeAttribute.getValue().intern()!=("")) {
+                        theMostCorrelativeAttributePoints.remove(length - 1);
+                      }
+                    }
+                });
+            }
+            else {
+                ListProperty tempList=ts.getListOfPointsUntilSpecificRow(selectedFeature.getValue(),numOfRow.getValue());
+                Platform.runLater(()-> selectedAttributePoints.setValue(tempList));
+                localSelectedFeature=selectedFeature.getValue();
+                if(theMostCorrelativeAttribute.getValue().intern()!=("").intern()){
+                    ListProperty tempList2=ts.getListOfPointsUntilSpecificRow(theMostCorrelativeAttribute.getValue(),numOfRow.getValue());
+                    Platform.runLater(()->theMostCorrelativeAttributePoints.setValue(tempList2));
+                    }
+                }
+                localNumOfRow=numOfRow.getValue();
+                if(theMostCorrelativeAttribute.getValue().intern()==("").intern()){
+                    Platform.runLater(()->theMostCorrelativeAttributePoints.setValue(new SimpleListProperty(FXCollections.observableArrayList())));
+                }
+            });
+    }
+
+    private void setTime(int rowNumber) {
+        int totalMilliseconds=(int)(rowNumber*properties.getRate());
+        int seconds=(totalMilliseconds / 1000) % 60;
+        int minutes=(totalMilliseconds / 60000) % 60;
+        Platform.runLater(() -> currentTime.set((minutes+":"+seconds)));
+    }
+
+    public void shutdownExecutor() { executor.shutdown(); }
+
+    public void play(){
+        model.play((int)(progression.getValue()* ts.getRowSize()));
+    }
+
+    public void pause() {
+        model.pause();
+    }
+
+    public void forward(){ model.forward(); }
+
+    public void rewind(){ model.rewind(); }
+
+    public Callable<AnchorPane> getPainter() throws Exception {
+        return model.getPainter();
+    }
+
+    public void setAnomalyDetector(String classPath) throws MalformedURLException, ClassNotFoundException, InstantiationException, IllegalAccessException {
+        URLClassLoader urlClassLoader = URLClassLoader.newInstance(new URL[] {
+                new URL("file:///"+classPath)
+        });
+        Class<?> c=urlClassLoader.loadClass("anomalyDetectors.Algorithm");
+        AnomalyDetector ad=(AnomalyDetector) c.newInstance();
+        if(!model.setAnomalyDetector(ad,selectedFeature,regTs)){
+           throw new IllegalAccessException();
+        }
+    }
+}

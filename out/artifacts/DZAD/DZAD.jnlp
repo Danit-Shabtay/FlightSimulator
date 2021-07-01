@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<jnlp spec="1.0" xmlns:jfx="http://javafx.com" href="DZAD.jnlp">
+  <information>
+    <title>DZAD</title>
+    <vendor>Unknown</vendor>
+    <description>DZAD</description>
+    <offline-allowed/>
+  </information>
+  <resources>
+    <j2se version="1.6+" href="http://java.sun.com/products/autodl/j2se"/>
+    <jar href="DZAD.jar" size="1227736" download="eager" />
+  </resources>
+  <jfx:javafx-desc  width="600" height="400" main-class="view.Main"  name="DZAD" />
+  <update check="background"/>
+</jnlp>
