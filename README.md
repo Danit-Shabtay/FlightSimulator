@@ -4,20 +4,15 @@
 ### Background
 Final project in Advanced software development course
 as part of our B.Sc. Computer Science studies.
-The project present visual analysis of flight control details.
+The project presents a visual analysis of flight control details.
 
 
-The Flight simulator can connect to the FlightGear software according to  tcp protocol,
+The Flight simulator can connect to the FlightGear software according to TCP protocol,
 Our simulator knows to tell us where anomalies in the values ​​of the interrogated interrogation were detected given a normal flight file and another interrogated flight file.
 We have developed for the investigation of the anomalies anomalies algorithms.
 
 The app does not know the anomaly algorithms in advance but loads them as a plug-in,
 And so the user can build his own anomaly algorithms and add them himself.
-
----
-
-### Flight-gear simulator controller
-<img src="img\img0.png" width=555>
 
 ---
 
@@ -41,11 +36,6 @@ And after clicking play the plane starts taking off,
 You can run forward and not wait for takeoff a lot of time.
 
 <img src="img\img03.png" width=555>
-
----
-
-### Video
-https://drive.google.com/file/d/1gQKQG2NqbzyUxbmK9FM0IV0djJEjAMEw/view?usp=sharing
 
 ---
 
